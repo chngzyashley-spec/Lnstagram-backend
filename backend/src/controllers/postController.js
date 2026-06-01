@@ -79,7 +79,10 @@ exports.getFeed = async (req, res) => {
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id)::int AS comment_count,
         EXISTS(
           SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1
-        ) AS is_liked
+        ) AS is_liked,
+        EXISTS(
+          SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $1
+        ) AS is_reposted
       FROM posts p
       JOIN users u ON p.user_id = u.id
     `;
@@ -111,6 +114,7 @@ exports.getFeed = async (req, res) => {
       like_count: p.like_count,
       comment_count: p.comment_count,
       is_liked: p.is_liked,
+      is_reposted: p.is_reposted,
       user: {
         id: p.user_id,
         username: p.username,
@@ -137,11 +141,13 @@ exports.getPost = async (req, res) => {
       `      SELECT p.id, p.user_id, p.image_url, p.image_urls, p.caption, p.aspect_ratio, p.created_at,
         u.username, u.avatar_url,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id)::int AS like_count,
-        (SELECT COUNT(*) FROM comments WHERE post_id = p.id)::int AS comment_count
+        (SELECT COUNT(*) FROM comments WHERE post_id = p.id)::int AS comment_count,
+        EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2) AS is_liked,
+        EXISTS(SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $2) AS is_reposted
        FROM posts p
        JOIN users u ON p.user_id = u.id
        WHERE p.id = $1`,
-      [id]
+      [id, userId || null]
     );
 
     if (result.rows.length === 0) {
@@ -150,20 +156,10 @@ exports.getPost = async (req, res) => {
 
     const post = result.rows[0];
 
-    let isLiked = false;
-    if (userId) {
-      const likeCheck = await db.query(
-        'SELECT id FROM likes WHERE user_id = $1 AND post_id = $2',
-        [userId, id]
-      );
-      isLiked = likeCheck.rows.length > 0;
-    }
-
     res.json({
       post: fixImageUrls({
         ...post,
         image_urls: post.image_urls || [post.image_url],
-        is_liked: isLiked,
         user: {
           id: post.user_id,
           username: post.username,
@@ -216,7 +212,10 @@ exports.getUserPosts = async (req, res) => {
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id)::int AS comment_count,
         EXISTS(
           SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2
-        ) AS is_liked
+        ) AS is_liked,
+        EXISTS(
+          SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $2
+        ) AS is_reposted
       FROM posts p
       WHERE p.user_id = $1
       ORDER BY p.created_at DESC

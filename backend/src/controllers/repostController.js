@@ -72,14 +72,16 @@ exports.getUserReposts = async (req, res) => {
         u.username, u.avatar_url,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id)::int AS like_count,
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id)::int AS comment_count,
-        r.created_at AS reposted_at
+        r.created_at AS reposted_at,
+        EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2) AS is_liked,
+        EXISTS(SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $2) AS is_reposted
        FROM reposts r
        JOIN posts p ON r.post_id = p.id
        JOIN users u ON p.user_id = u.id
        WHERE r.user_id = $1
        ORDER BY r.created_at DESC
        LIMIT 30`,
-      [targetId]
+      [targetId, userId || null]
     );
 
     const posts = result.rows.map((p) => ({
@@ -93,6 +95,8 @@ exports.getUserReposts = async (req, res) => {
       reposted_at: p.reposted_at,
       like_count: p.like_count,
       comment_count: p.comment_count,
+      is_liked: p.is_liked,
+      is_reposted: p.is_reposted,
       is_repost: true,
       user: {
         id: p.user_id,
