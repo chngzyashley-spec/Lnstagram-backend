@@ -27,19 +27,16 @@ exports.getSettings = async (req, res) => {
 exports.updateSettings = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { liked_posts_public } = req.body;
-
-    if (typeof liked_posts_public !== 'boolean') {
-      return res.status(400).json({ error: 'liked_posts_public must be a boolean.' });
-    }
+    const { liked_posts_public, private_account, show_activity } = req.body;
 
     // Build dynamic update for any setting field
-    const updates = { liked_posts_public, private_account, show_activity } = req.body;
     const setClauses = [];
     const values = [userId];
     let idx = 2;
 
-    for (const [key, val] of Object.entries({ liked_posts_public, private_account, show_activity })) {
+    const allowedSettings = { liked_posts_public, private_account, show_activity };
+
+    for (const [key, val] of Object.entries(allowedSettings)) {
       if (val !== undefined) {
         if (typeof val !== 'boolean') {
           return res.status(400).json({ error: `${key} must be a boolean.` });
@@ -54,7 +51,7 @@ exports.updateSettings = async (req, res) => {
     }
 
     const result = await db.query(
-      `INSERT INTO user_settings (user_id, ${Object.keys({ liked_posts_public, private_account, show_activity }).filter(k => req.body[k] !== undefined).join(', ')})
+      `INSERT INTO user_settings (user_id, ${setClauses.map((c, i) => c.split(' = ')[0]).join(', ')})
        VALUES ($1, ${values.slice(1).map((_, i) => `$${i + 2}`).join(', ')})
        ON CONFLICT (user_id)
        DO UPDATE SET ${setClauses.join(', ')}
