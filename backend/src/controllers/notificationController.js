@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { fixImageUrls } = require('../utils/urlHelper');
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -15,7 +16,7 @@ exports.getNotifications = async (req, res) => {
       [userId]
     );
 
-    res.json({ notifications: result.rows });
+    res.json({ notifications: fixImageUrls(result.rows) });
   } catch (error) {
     console.error('Get notifications error:', error);
     res.status(500).json({ error: 'Server error.' });

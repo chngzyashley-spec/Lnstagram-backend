@@ -1,5 +1,6 @@
 const validator = require('validator');
 const db = require('../config/database');
+const { fixImageUrls } = require('../utils/urlHelper');
 
 exports.getComments = async (req, res) => {
   try {
@@ -16,7 +17,7 @@ exports.getComments = async (req, res) => {
       [postId]
     );
 
-    res.json({ comments: result.rows });
+    res.json({ comments: fixImageUrls(result.rows) });
   } catch (error) {
     console.error('Get comments error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -65,10 +66,10 @@ exports.createComment = async (req, res) => {
     }
 
     res.status(201).json({
-      comment: {
+      comment: fixImageUrls({
         ...comment,
         user: userResult.rows[0],
-      },
+      }),
     });
   } catch (error) {
     console.error('Create comment error:', error);

@@ -1,6 +1,7 @@
 const validator = require('validator');
 const db = require('../config/database');
 const { cropImage } = require('../utils/imageProcessor');
+const { fixImageUrls } = require('../utils/urlHelper');
 
 exports.getProfile = async (req, res) => {
   try {
@@ -31,7 +32,7 @@ exports.getProfile = async (req, res) => {
       isFollowing = followCheck.rows.length > 0;
     }
 
-    res.json({ user: { ...user, is_following: isFollowing } });
+    res.json({ user: fixImageUrls({ ...user, is_following: isFollowing }) });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -114,7 +115,7 @@ exports.editProfile = async (req, res) => {
       [userId]
     );
 
-    res.json({ user: { ...user, ...counts.rows[0] } });
+    res.json({ user: fixImageUrls({ ...user, ...counts.rows[0] }) });
   } catch (error) {
     console.error('Edit profile error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -138,7 +139,7 @@ exports.searchUsers = async (req, res) => {
       [`%${q}%`]
     );
 
-    res.json({ users: result.rows });
+    res.json({ users: fixImageUrls(result.rows) });
   } catch (error) {
     console.error('Search error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -229,7 +230,7 @@ exports.getFollowers = async (req, res) => {
       [userResult.rows[0].id]
     );
 
-    res.json({ users: result.rows });
+    res.json({ users: fixImageUrls(result.rows) });
   } catch (error) {
     console.error('Get followers error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -255,7 +256,7 @@ exports.getFollowing = async (req, res) => {
       [userResult.rows[0].id]
     );
 
-    res.json({ users: result.rows });
+    res.json({ users: fixImageUrls(result.rows) });
   } catch (error) {
     console.error('Get following error:', error);
     res.status(500).json({ error: 'Server error.' });

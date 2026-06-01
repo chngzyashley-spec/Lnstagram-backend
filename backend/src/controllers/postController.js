@@ -1,6 +1,7 @@
 const validator = require('validator');
 const db = require('../config/database');
 const { cropImage } = require('../utils/imageProcessor');
+const { fixImageUrls } = require('../utils/urlHelper');
 
 exports.createPost = async (req, res) => {
   try {
@@ -45,13 +46,13 @@ exports.createPost = async (req, res) => {
     );
 
     res.status(201).json({
-      post: {
+      post: fixImageUrls({
         ...post,
         user: userResult.rows[0],
         like_count: 0,
         comment_count: 0,
         is_liked: false,
-      },
+      }),
     });
   } catch (error) {
     console.error('Create post error:', error);
@@ -118,7 +119,7 @@ exports.getFeed = async (req, res) => {
     }));
 
     res.json({
-      posts: formattedPosts,
+      posts: fixImageUrls(formattedPosts),
       next_cursor: hasMore ? posts[posts.length - 1].created_at : null,
     });
   } catch (error) {
@@ -159,7 +160,7 @@ exports.getPost = async (req, res) => {
     }
 
     res.json({
-      post: {
+      post: fixImageUrls({
         ...post,
         image_urls: post.image_urls || [post.image_url],
         is_liked: isLiked,
@@ -168,7 +169,7 @@ exports.getPost = async (req, res) => {
           username: post.username,
           avatar_url: post.avatar_url,
         },
-      },
+      }),
     });
   } catch (error) {
     console.error('Get post error:', error);
@@ -223,10 +224,10 @@ exports.getUserPosts = async (req, res) => {
       [targetId, userId || null]
     );
 
-    const posts = result.rows.map((p) => ({
+    const posts = fixImageUrls(result.rows.map((p) => ({
       ...p,
       image_urls: p.image_urls || [p.image_url],
-    }));
+    })));
 
     res.json({ posts });
   } catch (error) {
