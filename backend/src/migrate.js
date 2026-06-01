@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(30) UNIQUE NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  raw_password VARCHAR(255),
   full_name VARCHAR(100),
   bio VARCHAR(500),
   avatar_url VARCHAR(500),
@@ -23,7 +24,9 @@ CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   image_url VARCHAR(500) NOT NULL,
+  image_urls TEXT[],
   caption VARCHAR(2200),
+  aspect_ratio VARCHAR(20) DEFAULT 'square',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -103,9 +106,13 @@ CREATE TABLE IF NOT EXISTS user_settings (
   show_activity BOOLEAN DEFAULT TRUE
 );
 
--- Add missing columns for existing user_settings tables
+-- Add missing columns for existing tables (safe re-runs)
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS private_account BOOLEAN DEFAULT FALSE;
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS show_activity BOOLEAN DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS raw_password VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_urls TEXT[];
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS aspect_ratio VARCHAR(20) DEFAULT 'square';
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
