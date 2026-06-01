@@ -7,13 +7,9 @@ const { generalLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// Middleware
-const corsOrigin = config.frontendUrl === '*' 
-  ? true  // Reflects the request origin (needed when using credentials)
-  : config.frontendUrl;
-
+// Middleware - allow all origins (dev app, not production)
 app.use(cors({
-  origin: corsOrigin,
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
