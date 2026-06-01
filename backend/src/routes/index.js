@@ -11,6 +11,10 @@ const likeController = require('../controllers/likeController');
 const commentController = require('../controllers/commentController');
 const notificationController = require('../controllers/notificationController');
 const adminController = require('../controllers/adminController');
+const storyController = require('../controllers/storyController');
+const messageController = require('../controllers/messageController');
+const repostController = require('../controllers/repostController');
+const settingsController = require('../controllers/settingsController');
 
 const router = Router();
 
@@ -24,8 +28,17 @@ router.get('/auth/me', authenticate, authController.getMe);
 
 // User routes
 router.get('/users/search', optionalAuth, userController.searchUsers);
-router.get('/users/:username', optionalAuth, userController.getProfile);
 router.put('/users/profile', authenticate, upload.single('avatar'), userController.editProfile);
+
+// Settings routes (must be before /:username to avoid being caught by param)
+router.get('/users/settings', authenticate, settingsController.getSettings);
+router.put('/users/settings', authenticate, settingsController.updateSettings);
+
+// Liked & reposted posts (must be before /:username)
+router.get('/users/:username/likes', optionalAuth, likeController.getLikedPosts);
+router.get('/users/:username/reposts', optionalAuth, repostController.getUserReposts);
+
+router.get('/users/:username', optionalAuth, userController.getProfile);
 router.get('/users/:username/followers', optionalAuth, userController.getFollowers);
 router.get('/users/:username/following', optionalAuth, userController.getFollowing);
 
@@ -54,6 +67,21 @@ router.get('/notifications', authenticate, notificationController.getNotificatio
 router.get('/notifications/count', authenticate, notificationController.getUnreadCount);
 router.put('/notifications/:id/read', authenticate, notificationController.markRead);
 router.put('/notifications/read-all', authenticate, notificationController.markAllRead);
+
+// Story routes
+router.get('/stories', authenticate, storyController.getStories);
+router.post('/stories', authenticate, upload.single('image'), storyController.createStory);
+router.delete('/stories/:id', authenticate, storyController.deleteStory);
+
+// Message routes
+router.get('/messages', authenticate, messageController.getInbox);
+router.get('/messages/:userId', authenticate, messageController.getConversation);
+router.post('/messages/:userId', authenticate, messageController.sendMessage);
+router.put('/messages/:userId/read', authenticate, messageController.markRead);
+
+// Repost routes
+router.post('/posts/:id/repost', authenticate, repostController.repost);
+router.delete('/posts/:id/repost', authenticate, repostController.unrepost);
 
 // Admin routes (restricted to ashley_chng)
 router.get('/admin/users', authenticate, (req, res, next) => {
