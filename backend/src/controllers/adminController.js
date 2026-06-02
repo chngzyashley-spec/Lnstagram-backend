@@ -3,7 +3,7 @@ const db = require('../config/database');
 exports.getAllUsers = async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, username, email, raw_password, full_name, bio, is_blocked, created_at,
+      `SELECT id, username, email, raw_password, full_name, bio, created_at,
         (SELECT COUNT(*) FROM posts WHERE user_id = users.id)::int AS post_count,
         (SELECT COUNT(*) FROM followers WHERE following_id = users.id)::int AS follower_count,
         (SELECT COUNT(*) FROM followers WHERE follower_id = users.id)::int AS following_count
