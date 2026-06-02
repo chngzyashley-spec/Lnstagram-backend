@@ -166,14 +166,24 @@ CREATE TRIGGER update_posts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 `;
 
+async function runMigration() {
+  await db.query(schema);
+}
+
 async function migrate() {
   try {
-    await db.query(schema);
+    await runMigration();
     console.log('✅ Database migration completed successfully');
+    process.exit(0);
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     process.exit(1);
   }
 }
 
-migrate();
+// Run directly when executed via CLI
+if (require.main === module) {
+  migrate();
+}
+
+module.exports = { runMigration };

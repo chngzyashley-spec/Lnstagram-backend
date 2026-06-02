@@ -89,6 +89,20 @@ router.post('/posts/:id/repost', authenticate, repostController.repost);
 router.delete('/posts/:id/repost', authenticate, repostController.unrepost);
 
 // Admin routes (restricted to ashley_chng)
+router.post('/admin/migrate', authenticate, async (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  try {
+    const { runMigration } = require('../migrate');
+    await runMigration();
+    res.json({ message: 'Migration completed successfully.' });
+  } catch (error) {
+    console.error('Migration via API error:', error);
+    res.status(500).json({ error: 'Migration failed: ' + error.message });
+  }
+});
+
 router.get('/admin/users', authenticate, (req, res, next) => {
   if (req.user.username !== 'ashley_chng') {
     return res.status(403).json({ error: 'Forbidden.' });
