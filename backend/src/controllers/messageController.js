@@ -70,9 +70,12 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ error: 'Message too long (max 2000 chars).' });
     }
 
-    // Check if recipient is blocked
-    const recipientCheck = await db.query('SELECT is_blocked FROM users WHERE id = $1', [recipientId]);
-    if (recipientCheck.rows.length > 0 && recipientCheck.rows[0].is_blocked) {
+    // Check if either user has blocked the other
+    const blockCheck = await db.query(
+      'SELECT id FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
+      [senderId, recipientId]
+    );
+    if (blockCheck.rows.length > 0) {
       return res.status(403).json({ error: 'Cannot send messages to this user.' });
     }
 

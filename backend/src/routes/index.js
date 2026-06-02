@@ -15,6 +15,7 @@ const storyController = require('../controllers/storyController');
 const messageController = require('../controllers/messageController');
 const repostController = require('../controllers/repostController');
 const settingsController = require('../controllers/settingsController');
+const blockController = require('../controllers/blockController');
 
 const router = Router();
 
@@ -79,6 +80,10 @@ router.get('/messages/:userId', authenticate, messageController.getConversation)
 router.post('/messages/:userId', authenticate, messageController.sendMessage);
 router.put('/messages/:userId/read', authenticate, messageController.markRead);
 
+// Block routes (any authenticated user can block/unblock any other user)
+router.post('/users/:id/block', authenticate, blockController.blockUser);
+router.post('/users/:id/unblock', authenticate, blockController.unblockUser);
+
 // Repost routes
 router.post('/posts/:id/repost', authenticate, repostController.repost);
 router.delete('/posts/:id/repost', authenticate, repostController.unrepost);
@@ -98,13 +103,6 @@ router.delete('/admin/users/seed', authenticate, (req, res, next) => {
   next();
 }, adminController.deleteSeedUsers);
 
-router.delete('/admin/users/:id', authenticate, (req, res, next) => {
-  if (req.user.username !== 'ashley_chng') {
-    return res.status(403).json({ error: 'Forbidden.' });
-  }
-  next();
-}, adminController.deleteUser);
-
 router.post('/admin/users/:id/block', authenticate, (req, res, next) => {
   if (req.user.username !== 'ashley_chng') {
     return res.status(403).json({ error: 'Forbidden.' });
@@ -118,5 +116,12 @@ router.post('/admin/users/:id/unblock', authenticate, (req, res, next) => {
   }
   next();
 }, adminController.unblockUser);
+
+router.delete('/admin/users/:id', authenticate, (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  next();
+}, adminController.deleteUser);
 
 module.exports = router;

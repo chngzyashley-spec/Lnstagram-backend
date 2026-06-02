@@ -24,15 +24,23 @@ exports.getProfile = async (req, res) => {
 
     // Check if current user follows this profile
     let isFollowing = false;
+    let isBlocked = false;
     if (req.user && req.user.id !== user.id) {
       const followCheck = await db.query(
         'SELECT id FROM followers WHERE follower_id = $1 AND following_id = $2',
         [req.user.id, user.id]
       );
       isFollowing = followCheck.rows.length > 0;
+
+      // Check if current user has blocked this profile user
+      const blockCheck = await db.query(
+        'SELECT id FROM blocks WHERE blocker_id = $1 AND blocked_id = $2',
+        [req.user.id, user.id]
+      );
+      isBlocked = blockCheck.rows.length > 0;
     }
 
-    res.json({ user: fixImageUrls({ ...user, is_following: isFollowing }) });
+    res.json({ user: fixImageUrls({ ...user, is_following: isFollowing, is_blocked_by_me: isBlocked }) });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Server error.' });
@@ -156,13 +164,17 @@ exports.followUser = async (req, res) => {
     }
 
     // Check if target exists
-    const targetUser = await db.query('SELECT id, username, is_blocked FROM users WHERE id = $1', [followingId]);
+    const targetUser = await db.query('SELECT id, username FROM users WHERE id = $1', [followingId]);
     if (targetUser.rows.length === 0) {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    // Check if blocked from following
-    if (targetUser.rows[0].is_blocked) {
+    // Check if current user has blocked this person or vice versa
+    const blockCheck = await db.query(
+      'SELECT id FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
+      [followerId, followingId]
+    );
+    if (blockCheck.rows.length > 0) {
       return res.status(403).json({ error: 'Cannot follow this user.' });
     }
 
