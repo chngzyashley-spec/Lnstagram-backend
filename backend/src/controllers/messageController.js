@@ -36,10 +36,12 @@ exports.getConversation = async (req, res) => {
     const { userId: partnerId } = req.params;
 
     const result = await db.query(
-      `SELECT m.id, m.sender_id, m.recipient_id, m.content, m.read, m.created_at,
-        u.username AS sender_username, u.avatar_url AS sender_avatar
+      `      SELECT m.id, m.sender_id, m.recipient_id, m.content, m.read, m.created_at,
+        sender.username AS sender_username, sender.avatar_url AS sender_avatar,
+        recipient.username AS recipient_username, recipient.avatar_url AS recipient_avatar
        FROM messages m
-       JOIN users u ON m.sender_id = u.id
+       JOIN users sender ON m.sender_id = sender.id
+       JOIN users recipient ON m.recipient_id = recipient.id
        WHERE (m.sender_id = $1 AND m.recipient_id = $2)
           OR (m.sender_id = $2 AND m.recipient_id = $1)
        ORDER BY m.created_at ASC
