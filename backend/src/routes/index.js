@@ -98,4 +98,25 @@ router.delete('/admin/users/seed', authenticate, (req, res, next) => {
   next();
 }, adminController.deleteSeedUsers);
 
+router.delete('/admin/users/:id', authenticate, (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  next();
+}, adminController.deleteUser);
+
+router.post('/admin/users/:id/block', authenticate, (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  next();
+}, adminController.blockUser);
+
+router.post('/admin/users/:id/unblock', authenticate, (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  next();
+}, adminController.unblockUser);
+
 module.exports = router;

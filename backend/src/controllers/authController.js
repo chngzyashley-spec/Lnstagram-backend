@@ -89,7 +89,7 @@ exports.login = async (req, res) => {
 
     // Find user
     const result = await db.query(
-      'SELECT id, username, email, password_hash, full_name, bio, avatar_url, created_at FROM users WHERE email = $1 OR username = $1',
+      'SELECT id, username, email, password_hash, full_name, bio, avatar_url, is_blocked, created_at FROM users WHERE email = $1 OR username = $1',
       [email.toLowerCase()]
     );
 
@@ -98,6 +98,11 @@ exports.login = async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // Check if blocked
+    if (user.is_blocked) {
+      return res.status(403).json({ error: 'Your account has been suspended.' });
+    }
 
     // Check password
     const isValid = await bcrypt.compare(password, user.password_hash);

@@ -156,9 +156,14 @@ exports.followUser = async (req, res) => {
     }
 
     // Check if target exists
-    const targetUser = await db.query('SELECT id, username FROM users WHERE id = $1', [followingId]);
+    const targetUser = await db.query('SELECT id, username, is_blocked FROM users WHERE id = $1', [followingId]);
     if (targetUser.rows.length === 0) {
       return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Check if blocked from following
+    if (targetUser.rows[0].is_blocked) {
+      return res.status(403).json({ error: 'Cannot follow this user.' });
     }
 
     // Check if already following
