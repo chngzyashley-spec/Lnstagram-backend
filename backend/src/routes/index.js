@@ -91,4 +91,11 @@ router.get('/admin/users', authenticate, (req, res, next) => {
   next();
 }, adminController.getAllUsers);
 
+router.delete('/admin/users/seed', authenticate, (req, res, next) => {
+  if (req.user.username !== 'ashley_chng') {
+    return res.status(403).json({ error: 'Forbidden.' });
+  }
+  next();
+}, adminController.deleteSeedUsers);
+
 module.exports = router;
